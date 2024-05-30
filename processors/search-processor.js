@@ -39,26 +39,22 @@ const safetySettings = [
 async function processSearchQuery(query) {
    let cat = await getCategory(query);
    let appList = await generateAppList(cat);
-   /**
-    const scores = appList.map(async (app) => {
-       return await getScore({
-          id: app.id,
-          title: app.title,
-          description: app.description,
-          query: query,
-       });
-    });
-    */
-
-   console.log(
-      await getScore({
-         id: appList[0].id,
-         title: appList[0].title,
-         description: appList[0].description,
-         searchPrompt: query,
+   const scores = await Promise.all(
+      appList.map(async (app) => {
+         const scoreString = await getScore({
+            id: app.id,
+            title: app.title,
+            description: app.description,
+            searchPrompt: query,
+         });
+         console.log(scoreString);
+         return extractJson(scoreString); // Convert the JSON string to a JSON object
       })
    );
-   return -1;
+
+   const filteredArray = scores.filter((app) => app.score >= 5);
+
+   return filteredArray;
 }
 
 async function getScore(appData) {
@@ -73,8 +69,8 @@ async function getScore(appData) {
       safetySettings,
       history: [],
    });
-   const result = await chatSession.sendMessage(appData);
-   console.log("getting score for: ", appData);
+   console.log("getting score for: ", appData.id);
+   const result = await chatSession.sendMessage(JSON.stringify(appData));
 
    return result.response.text();
 }
@@ -101,9 +97,9 @@ async function getCategory(query) {
 async function generateAppList(query) {
    try {
       let data = await store.list({
-         collection: store.collection.TOP_FREE_IPAD,
+         collection: store.collection.TOP_FREE_IOS,
          category: store.category[query],
-         num: 30,
+         num: 10,
       });
       return data;
    } catch (e) {
@@ -111,5 +107,23 @@ async function generateAppList(query) {
       return { error: true, message: "can't retrieve list data" };
    }
 }
+
+const extractJson = (str) => {
+   const jsonRegex = /(?:\{[^{}]*\}|\[[^\[\]]*\])/g;
+   const matches = str.match(jsonRegex);
+   if (matches) {
+      return matches
+         .map((match) => {
+            try {
+               return JSON.parse(match);
+            } catch (error) {
+               console.error("Invalid JSON:", match);
+               return null;
+            }
+         })
+         .filter((result) => result !== null);
+   }
+   return [];
+};
 
 module.exports = { processSearchQuery };
