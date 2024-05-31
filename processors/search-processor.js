@@ -39,18 +39,17 @@ const safetySettings = [
 async function processSearchQuery(query) {
    let cat = await getCategory(query);
    let appList = await generateAppList(cat);
-   const scores = await Promise.all(
-      appList.map(async (app) => {
-         const scoreString = await getScore({
-            id: app.id,
-            title: app.title,
-            description: app.description,
-            searchPrompt: query,
-         });
-         console.log(scoreString);
-         return extractJson(scoreString); // Convert the JSON string to a JSON object
-      })
-   );
+   const scores = [];
+   for (const app of appList) {
+      const scoreString = await getScore({
+         id: app.id,
+         title: app.title,
+         description: app.description,
+         searchPrompt: query,
+      });
+      console.log(scoreString);
+      scores.push(extractJson(scoreString)); // Convert the JSON string to a JSON object
+   }
 
    const filteredArray = scores.filter((app) => app.score >= 5);
 
@@ -99,7 +98,7 @@ async function generateAppList(query) {
       let data = await store.list({
          collection: store.collection.TOP_FREE_IOS,
          category: store.category[query],
-         num: 10,
+         num: 20,
       });
       return data;
    } catch (e) {
