@@ -37,23 +37,118 @@ const safetySettings = [
 ];
 
 async function processSearchQuery(query) {
+   /*
    let cat = await getCategory(query);
    let appList = await generateAppList(cat);
+
    const scores = [];
-   for (const app of appList) {
-      const scoreString = await getScore({
-         id: app.id,
-         title: app.title,
-         description: app.description,
-         searchPrompt: query,
+   try {
+      for (const app of appList) {
+         const scoreString = await getScore({
+            id: app.id,
+            title: app.title,
+            description: app.description,
+            searchPrompt: query,
+         });
+         console.log(scoreString);
+         scores.push(extractJson(scoreString)); // Convert the JSON string to a JSON object
+      }
+   } catch (e) {
+      console.log("Error occured while getting data: ", e);
+   }
+   const filteredArray = scores.filter((app) => app.score != 1);
+   */
+   const filteredArray = [
+      [
+         {
+            id: "711923939",
+            score: 3,
+            reason:
+               "Cash App offers features like sending and receiving money, discounts, tax filing, and early paychecks.  However, it does not explicitly provide tracking features for costs or expenses. ",
+         },
+      ],
+      [
+         {
+            id: "283646709",
+            score: 6,
+            reason:
+               "This application provides an excellent feature for order tracking, allowing users to monitor their packages, even if they didn't pay with PayPal, directly through the app. This feature ensures convenience and peace of mind for users regarding their deliveries.",
+         },
+      ],
+      [
+         {
+            id: "351727428",
+            score: 4,
+            reason:
+               "Venmo offers a robust platform for managing finances, but it doesn't directly focus on tracking costs. While you can monitor transactions and even earn cashback, it doesn't provide dedicated tools for detailed expense analysis.",
+         },
+      ],
+      [
+         {
+            id: "1260755201",
+            score: 2,
+            reason:
+               "While Zelle excels in offering quick and convenient peer-to-peer money transfers, it doesn't directly address tracking costs. Its focus is on facilitating seamless payments between individuals, not on managing or monitoring expenditures.",
+         },
+      ],
+      [
+         {
+            id: "407558537",
+            score: 3,
+            reason:
+               "While the app offers features like viewing balances and exporting statements, it doesn't explicitly focus on tracking spending or providing detailed cost analysis tools.",
+         },
+      ],
+      [
+         {
+            id: "298867247",
+            score: 7,
+            reason:
+               "This application offers budgeting tools to help you track your spending and manage your finances effectively. You can set a budget and track your debit/credit transactions to understand your spending patterns.",
+         },
+      ],
+      [
+         {
+            id: "349731802",
+            score: 6,
+            reason:
+               "This application offers convenient bill payment options like credit card, debit card, checking account, or PayPal, allowing users to manage their insurance costs effectively. It also provides access to billing history and upcoming payment schedules, enhancing transparency and control over expenses.",
+         },
+      ],
+      [
+         {
+            id: "836215269",
+            score: 2,
+            reason:
+               "While Chime offers a variety of financial features and services, it does not explicitly focus on expense tracking. It's more geared towards providing convenient banking solutions, including budgeting tools and overdraft protection, which are indirectly related to managing costs.",
+         },
+      ],
+   ];
+
+   let finalApps = [];
+
+   for (const app of filteredArray) {
+      const appId = Number(app[0].id);
+
+      const fullData = await getFullAppData({
+         id: appId,
       });
-      console.log(scoreString);
-      scores.push(extractJson(scoreString)); // Convert the JSON string to a JSON object
+      finalApps.push(fullData); // Convert the JSON string to a JSON object
    }
 
-   const filteredArray = scores.filter((app) => app.score >= 5);
+   return finalApps;
+}
 
-   return filteredArray;
+async function getFullAppData(appId) {
+   let data = {};
+   try {
+      var store = require("app-store-scraper");
+      data = await store.app({ id: appId.id });
+      console.log(data);
+   } catch (e) {
+      //console.log("Error while getting full app data: ", e);
+   }
+   return data;
 }
 
 async function getScore(appData) {
